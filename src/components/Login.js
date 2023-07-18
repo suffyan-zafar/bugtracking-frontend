@@ -19,7 +19,7 @@ const Login = () => {
             localStorage.setItem("token", response.data.token);
             alert("successfull login!!");
             setUserObject(response.data.user[0])
-             navigate("/home");
+            navigate("/home");
         }
         else{
           alert( `${response.data.message}`)

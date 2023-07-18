@@ -31,9 +31,6 @@ const Navbar = () => {
             {localStorage.getItem("token") ? <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               {userObject.userObject?.role_name === "manager" ? <> 
               <li className="nav-item">
-                <Link className="nav-link active" aria-current="page" to="/home"> Home</Link>
-              </li>
-              <li className="nav-item">
                 <Link className="nav-link" to="/createproject">Create Project </Link>
               </li>  
               <li className="nav-item">
