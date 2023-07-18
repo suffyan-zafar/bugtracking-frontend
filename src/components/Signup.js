@@ -1,9 +1,24 @@
 import { useState } from "react";
+import axios from 'axios';
+
 const Signup = () => {
     const [user,setUser]=useState({name:"", email:"", password:"", userType:""});
     const onSubmit=(e)=>{
         e.preventDefault();
         console.log(user);
+        axios.post(`http://localhost:8080/api/v1/user/signup`, {
+          name:user.name,
+          email:user.email,
+          password:user.password,
+          user_type:user.userType
+        }).then((response)=>{
+            console.log(response.data);
+            alert(response.data.message);
+            setUser({name:"", email:"", password:"", userType:""});
+        }).catch((err)=>{
+            console.log(err,"err");
+        })
+      
     }
   return (
     <div className="container" style={{ width: 350, marginTop: 50 }}>
@@ -17,7 +32,7 @@ const Signup = () => {
           </label>
           <input
             type="name"
-            class="form-control"
+            className="form-control"
             id="name"
             placeholder="Enter name"
             required
@@ -31,7 +46,7 @@ const Signup = () => {
           </label>
           <input
             type="email"
-            class="form-control"
+            className="form-control"
             id="email"
             placeholder="Enter Email"
             required
@@ -45,7 +60,7 @@ const Signup = () => {
           </label>
           <input
             type="password"
-            class="form-control"
+            className="form-control"
             id="password"
             placeholder="Enter Password"
             required
@@ -59,6 +74,7 @@ const Signup = () => {
           <select name="type" id="type" style={{width:200,  height:35,marginLeft:20}}
               onChange={(e)=>{ setUser({...user,userType:e.target.value});}}
           >
+            <option value="">Select an Option</option>
             <option value="manager">Manager</option>
             <option value="developer">Developer</option>
             <option value="qa">QA</option>
