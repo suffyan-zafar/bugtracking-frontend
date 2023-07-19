@@ -2,22 +2,23 @@ import { useEffect, useState,useContext } from "react";
 import axios from "axios";
 import AuthContext from "../context/AuthContext";
 const CreateBug=()=>{
-  const [status, setStatus]=useState([]);
-  const [feature,setFeature]=useState("");
-  const [project,setProject]=useState([]);
   const { userObject } = useContext(AuthContext);
+  const [bug,setBug]=useState({title:"", description:"",deadline:Date,type:"",status:"",image:"",bug_creater:`${userObject.user_id}`, project:0,developer:0})
+  const [status, setStatus]=useState([]);
+  const [project,setProject]=useState([]);
+  const [developer,setDeveloper]=useState([""]);
   useEffect(()=>{
-    axios.get(`http://localhost:8080/api/v1/bug/getUserProject/${userObject?.user_id}`)
+    // get project against assign qa
+    axios.get(`http://localhost:8080/api/v1/bug/getuserproject/${userObject?.user_id}`)
     .then((response) => {
-        console.log(response.data, "data in react");
         setProject(response.data);
     })
     .catch((res) => { console.log(res);});
-  },[])
+  },[userObject?.user_id])
 
   const handleType=(e)=>{
     console.log(e.target.value,"f");
-    setFeature(e.target.value);
+   setBug({...bug,type:e.target.value});
 
     if(e.target.value==="feature"){
       console.log("in if");
@@ -30,6 +31,28 @@ const CreateBug=()=>{
       setStatus([]);
     }
   }
+  // get developer against selected projecct
+  const onProjectChange=(e)=>{
+    console.log(e.target.value,"project selected");
+     setBug({...bug,project:e.target.value});
+    axios.get(`http://localhost:8080/api/v1/bug/getprojectdeveloper/${e.target.value}`)
+    .then((response) => {
+        console.log(response.data, "data in react");
+        setDeveloper(response.data)
+    })
+    .catch((res) => { console.log(res);});
+  }
+
+  const handleOnSubmit=(e)=>{
+    e.preventDefault();
+      console.log(bug,"bug object");
+      axios.post(`http://localhost:8080/api/v1/bug/addbug`,bug)
+      .then((response) => {
+         console.log(response.data);
+         alert(response.data.message);
+      })
+      .catch((res) => { console.log(res);});
+  }
 
 
   return(
@@ -37,7 +60,7 @@ const CreateBug=()=>{
       <div className="mb-4">
         <h3>Create New Bug!</h3>
       </div>
-      <form >
+      <form onSubmit={handleOnSubmit}>
         <div className="mb-3">
           <label htmlFor="title" className="form-label">
             Title
@@ -48,7 +71,7 @@ const CreateBug=()=>{
             id="title"
             placeholder="Enter Bug Title"
             required
-           
+            onChange={(e)=>{ setBug({...bug,title:e.target.value});}}
           />
         </div>
         <div className="mb-3">
@@ -60,8 +83,7 @@ const CreateBug=()=>{
             className="form-control"
             id="description"
             placeholder="Enter Bug Description"
-            required
- 
+            onChange={(e)=>{ setBug({...bug,description:e.target.value});}}
           />
         </div>
         <div className="mb-3">
@@ -72,12 +94,12 @@ const CreateBug=()=>{
             id="deadline"
             placeholder="Enter Bug Deadline"
             required
- 
+            onChange={(e)=>{ setBug({...bug,deadline:e.target.value});}}
           />
         </div>
         <div className="mb-3">
           <label htmlFor="type">Choose Type:</label>
-          <select name="type" id="type" style={{width:200,  height:35,marginLeft:20}}
+          <select name="type" id="type" style={{width:200,  height:35,marginLeft:20}} required
             onChange={handleType}
           >
             <option value="">Select an Option</option>
@@ -86,18 +108,17 @@ const CreateBug=()=>{
           </select>
         </div>
         <div className="mb-3">
-          <label htmlFor="type">Choose Status:</label>
-          <select name="type" id="type" style={{width:200,  height:35,marginLeft:7}}
-
+          <label htmlFor="status">Choose Status:</label>
+          <select name="status" id="status" style={{width:200,  height:35,marginLeft:7}}
+          required
+           onChange={(e)=>{ setBug({...bug,status:e.target.value});}}
           >
              
               <option value="">Select an Option</option>
-            {status.map((item)=>(
-              <option value={item}>{item}</option>
+            {status.map((item, index)=>(
+              <option key={index} value={item}>{item}</option>
             
             ))}
-            
-    
           </select>
         </div>
         <div className="mb-3">
@@ -109,31 +130,31 @@ const CreateBug=()=>{
             className="form-control"
             id="image"
             placeholder="Enter Bug image"
-            required
- 
+            onChange={(e)=>{ setBug({...bug,image:e.target.value});}}
           />
         </div>
         <div className="mb-3">
-          <label htmlFor="type">Choose Project:</label>
-          <select name="type" id="type" style={{width:190,  height:35,marginLeft:15}}
-
+          <label htmlFor="project">Choose Project:</label>
+          <select name="project" id="project" style={{width:190,  height:35,marginLeft:15}} required
+              onChange={onProjectChange}
           >
             <option value="">Select an Option</option>
-            {project.map((item)=>(
-
-            <option value={item.project_id}>{item.project_title}</option>
+            {project.map((item, index)=>(
+            <option key={index} value={item.project_id}>{item.project_title}</option>
             ))}
     
           </select>
         </div>
         <div className="mb-3">
-          <label htmlFor="type">Choose Developer:</label>
-          <select name="type" id="type" style={{width:180,  height:35,marginLeft:7}}
-
+          <label htmlFor="developer">Choose Developer:</label>
+          <select name="developer" id="developer" style={{width:180,  height:35,marginLeft:7}}
+              required
+              onChange={(e)=>{ setBug({...bug,developer:e.target.value});}}
           >
             <option value="">Select an Option</option>
-            <option value="feature">Suffyan</option>
-            <option value="bug">Ali</option>
+            {developer?.map((item, index)=>(
+              <option key={index} value={item.user_id}>{item.name}</option>
+            ))}
           </select>
         </div>
       

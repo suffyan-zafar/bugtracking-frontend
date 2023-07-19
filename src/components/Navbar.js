@@ -45,7 +45,9 @@ const Navbar = () => {
               </li>
                <li className="nav-item">
                <Link className="nav-link" to="/displaybug">Display Bug</Link>
-             </li> </>: ""
+             </li> </>: userObject.userObject?.role_name === "developer" ?  <li className="nav-item">
+              <Link className="nav-link" to="/projectandbug">Project With Bug</Link> 
+            </li> :""
                   }
             </ul> : ""
             }

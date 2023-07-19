@@ -11,6 +11,8 @@ import AssignProject from "./components/AssignProject";
 import CreateBug from "./components/CreateBug";
 import DisplayBug from "./components/DIsplayBug";
 import DisplayProject from "./components/DisplayProject";
+import ProjectAndBug from "./components/ProjectAndBug";
+import UpdateBugStatus from "./components/UpdateBugStatus";
 import { useState } from "react";
 function App() {
 const [userObject, setUserObject]=useState(null);
@@ -30,6 +32,8 @@ const [userObject, setUserObject]=useState(null);
           <Route exact path="/createbug" element={<CreateBug />} />
           <Route exact path="/displaybug" element={<DisplayBug />} />
           <Route exact path="/displayproject" element={<DisplayProject />} />
+          <Route exact path="/projectandbug" element={<ProjectAndBug />} />
+          <Route exact path="/updatebugstatus" element={<UpdateBugStatus />} />
         </Routes>
       </AuthContext.Provider>
       </Router>
