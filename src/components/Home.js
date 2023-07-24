@@ -1,21 +1,21 @@
-import React, {useEffect, useContext} from 'react';
+import React, { useEffect, useContext } from 'react';
 import AuthContext from '../context/AuthContext';
 
 
-import {  useNavigate } from "react-router-dom";
-const Home=()=>{
+import { useNavigate } from "react-router-dom";
+const Home = () => {
     const userObject = useContext(AuthContext);
-    const navigate=useNavigate();
+    const navigate = useNavigate();
 
-    useEffect(()=>{
-        if(localStorage.getItem("token")){
+    useEffect(() => {
+        if (localStorage.getItem("token")) {
             navigate("/home")
         }
-        else{
+        else {
             navigate("/login")
         }
-    },[]);
-    return(
+    }, []);
+    return (
         <div>
             <h3> Wellcome To {userObject.userObject?.role_name} DashBoard {userObject.userObject?.name}!!!</h3>
         </div>

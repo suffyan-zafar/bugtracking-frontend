@@ -1,61 +1,79 @@
-import { useEffect, useState,useContext } from "react";
+import { useEffect, useState, useContext } from "react";
 import axios from "axios";
 import AuthContext from "../context/AuthContext";
-const CreateBug=()=>{
+import { useNavigate } from "react-router-dom";
+const CreateBug = () => {
   const { userObject } = useContext(AuthContext);
-  const [bug,setBug]=useState({title:"", description:"",deadline:Date,type:"",status:"",image:"",bug_creater:`${userObject.user_id}`, project:0,developer:0})
-  const [status, setStatus]=useState([]);
-  const [project,setProject]=useState([]);
-  const [developer,setDeveloper]=useState([""]);
-  useEffect(()=>{
+  const navigate = useNavigate();
+  const [bug, setBug] = useState({ title: "", description: "", deadline: Date, type: "", status: "", image: "", bug_creater: `${userObject.user_id}`, project: 0, developer: 0 })
+  const [status, setStatus] = useState([]);
+  const [project, setProject] = useState([]);
+  const [developer, setDeveloper] = useState([""]);
+  useEffect(() => {
     // get project against assign qa
     axios.get(`http://localhost:8080/api/v1/bug/getuserproject/${userObject?.user_id}`)
-    .then((response) => {
-        setProject(response.data);
-    })
-    .catch((res) => { console.log(res);});
-  },[userObject?.user_id])
+      .then((response) => {
+        console.log(response, "project resposne");
+        setProject(response.data.res);
+      })
+      .catch((res) => { console.log(res); });
+  }, [userObject?.user_id])
 
-  const handleType=(e)=>{
-    console.log(e.target.value,"f");
-   setBug({...bug,type:e.target.value});
+  const handleType = (e) => {
+    console.log(e.target.value, "f");
+    setBug({ ...bug, type: e.target.value });
 
-    if(e.target.value==="feature"){
+    if (e.target.value === "feature") {
       console.log("in if");
-      setStatus(["new","started","completed"]);
+      setStatus(["new", "started", "completed"]);
     }
-    else if(e.target.value==="bug"){
-      setStatus(["new","started","resolved"]);
+    else if (e.target.value === "bug") {
+      setStatus(["new", "started", "resolved"]);
     }
-    else{
+    else {
       setStatus([]);
     }
   }
   // get developer against selected projecct
-  const onProjectChange=(e)=>{
-    console.log(e.target.value,"project selected");
-     setBug({...bug,project:e.target.value});
+  const onProjectChange = (e) => {
+    console.log(e.target.value, "project selected");
+    setBug({ ...bug, project: e.target.value });
     axios.get(`http://localhost:8080/api/v1/bug/getprojectdeveloper/${e.target.value}`)
-    .then((response) => {
-        console.log(response.data, "data in react");
-        setDeveloper(response.data)
-    })
-    .catch((res) => { console.log(res);});
-  }
-
-  const handleOnSubmit=(e)=>{
-    e.preventDefault();
-      console.log(bug,"bug object");
-      axios.post(`http://localhost:8080/api/v1/bug/addbug`,bug)
       .then((response) => {
-         console.log(response.data);
-         alert(response.data.message);
+        console.log(response.data, "data in react");
+        setDeveloper(response.data.res)
       })
-      .catch((res) => { console.log(res);});
+      .catch((res) => { console.log(res); });
+  }
+
+  const handleOnSubmit = (e) => {
+    e.preventDefault();
+    const Data=new FormData();
+    Data.append("title", bug.title);
+    Data.append("description", bug.description);
+    Data.append("deadline", bug.deadline);
+    Data.append("type", bug.type);
+    Data.append("status", bug.status);
+    console.log(e.target.image.files,"uploaded");
+    Data.append("image", e.target.image.files[0]); // Get the selected file from the file input
+    // Append the rest of the data
+    Data.append("bug_creater", userObject.user_id);
+    Data.append("project", bug.project);
+    Data.append("developer", bug.developer);
+    axios.post(`http://localhost:8080/api/v1/bug/addbug`, Data)
+      .then((response) => {
+        console.log(response.data);
+        alert(response.data.message);
+
+        navigate("/displaybug")
+      })
+      .catch((res) => { 
+        alert(res.response.data.message);
+       });
   }
 
 
-  return(
+  return (
     <div className="container" style={{ width: 350, marginTop: 50 }}>
       <div className="mb-4">
         <h3>Create New Bug!</h3>
@@ -69,9 +87,10 @@ const CreateBug=()=>{
             type="text"
             className="form-control"
             id="title"
+            name="title"
             placeholder="Enter Bug Title"
             required
-            onChange={(e)=>{ setBug({...bug,title:e.target.value});}}
+            onChange={(e) => { setBug({ ...bug, title: e.target.value }); }}
           />
         </div>
         <div className="mb-3">
@@ -82,24 +101,26 @@ const CreateBug=()=>{
             type="text"
             className="form-control"
             id="description"
+            name="description"
             placeholder="Enter Bug Description"
-            onChange={(e)=>{ setBug({...bug,description:e.target.value});}}
+            onChange={(e) => { setBug({ ...bug, description: e.target.value }); }}
           />
         </div>
         <div className="mb-3">
           <label htmlFor="deadline" >Bug DeadLine</label>
-          <input 
+          <input
             type="date"
             className="form-control"
             id="deadline"
             placeholder="Enter Bug Deadline"
+            name="deadline"
             required
-            onChange={(e)=>{ setBug({...bug,deadline:e.target.value});}}
+            onChange={(e) => { setBug({ ...bug, deadline: e.target.value }); }}
           />
         </div>
         <div className="mb-3">
           <label htmlFor="type">Choose Type:</label>
-          <select name="type" id="type" style={{width:200,  height:35,marginLeft:20}} required
+          <select name="type" id="type" style={{ width: 200, height: 35, marginLeft: 20 }} required
             onChange={handleType}
           >
             <option value="">Select an Option</option>
@@ -109,15 +130,15 @@ const CreateBug=()=>{
         </div>
         <div className="mb-3">
           <label htmlFor="status">Choose Status:</label>
-          <select name="status" id="status" style={{width:200,  height:35,marginLeft:7}}
-          required
-           onChange={(e)=>{ setBug({...bug,status:e.target.value});}}
+          <select name="status" id="status" style={{ width: 200, height: 35, marginLeft: 7 }}
+            required
+            onChange={(e) => { setBug({ ...bug, status: e.target.value }); }}
           >
-             
-              <option value="">Select an Option</option>
-            {status.map((item, index)=>(
+
+            <option value="">Select an Option</option>
+            {status.map((item, index) => (
               <option key={index} value={item}>{item}</option>
-            
+
             ))}
           </select>
         </div>
@@ -128,36 +149,37 @@ const CreateBug=()=>{
           <input
             type="file"
             className="form-control"
+            name="image"
             id="image"
             placeholder="Enter Bug image"
-            onChange={(e)=>{ setBug({...bug,image:e.target.value});}}
+            onChange={(e) => { setBug({ ...bug, image: e.target.value }); }}
           />
         </div>
         <div className="mb-3">
           <label htmlFor="project">Choose Project:</label>
-          <select name="project" id="project" style={{width:190,  height:35,marginLeft:15}} required
-              onChange={onProjectChange}
+          <select name="project" id="project" style={{ width: 190, height: 35, marginLeft: 15 }} required
+            onChange={onProjectChange}
           >
             <option value="">Select an Option</option>
-            {project.map((item, index)=>(
-            <option key={index} value={item.project_id}>{item.project_title}</option>
+            {project.map((item, index) => (
+              <option key={index} value={item.project_id}>{item.project_title}</option>
             ))}
-    
+
           </select>
         </div>
         <div className="mb-3">
           <label htmlFor="developer">Choose Developer:</label>
-          <select name="developer" id="developer" style={{width:180,  height:35,marginLeft:7}}
-              required
-              onChange={(e)=>{ setBug({...bug,developer:e.target.value});}}
+          <select name="developer" id="developer" style={{ width: 180, height: 35, marginLeft: 7 }}
+            required
+            onChange={(e) => { setBug({ ...bug, developer: e.target.value }); }}
           >
             <option value="">Select an Option</option>
-            {developer?.map((item, index)=>(
+            {developer?.map((item, index) => (
               <option key={index} value={item.user_id}>{item.name}</option>
             ))}
           </select>
         </div>
-      
+
         <div className="mb-3">
           <button className="btn btn-primary " style={{ marginLeft: 120 }}>
             Create Bug
@@ -166,7 +188,7 @@ const CreateBug=()=>{
       </form>
     </div>
   )
-  }
-  
-  
-  export default CreateBug;
+}
+
+
+export default CreateBug;

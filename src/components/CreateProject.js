@@ -1,10 +1,12 @@
 import { useContext, useState } from "react";
 import AuthContext from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const CreateProject = () => {
   const [title, setTitle] = useState("");
   const { userObject } = useContext(AuthContext);
+  const navigate = useNavigate();
   const onSubmit = (e) => {
     e.preventDefault();
     axios.post(`http://localhost:8080/api/v1/project/addproject`, {
@@ -15,8 +17,10 @@ const CreateProject = () => {
         console.log(response.data);
         alert(response.data.message);
         setTitle("");
+        navigate('/displayproject');
       })
       .catch((err) => {
+        alert(err.response.data.message)
         console.log(err, "err");
       });
   };
