@@ -1,7 +1,9 @@
 import { useEffect, useState, useContext } from "react";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
-import axios from "axios";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import { updateBugStatusApi } from "../api/bugApi";
 const UpdateBugStatus = () => {
   const { userObject } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -9,43 +11,35 @@ const UpdateBugStatus = () => {
   const [status, setStatus] = useState(["new", "started", "completed"]);
   const [status2, setStatus2] = useState(["new", "started", "resolved"]);
   const [selected, setSelected] = useState("");
-
-
   const item = location.state;
-
   useEffect(() => {
     if (item.type === "feature") {
-      console.log("in if");
       setStatus(status.filter((items) => { return items !== item.status }))
     }
     else {
       setStatus2(status2.filter((items) => { return items !== item.status }))
     }
   }, [])
-  console.log(location, "in update status component");
-
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-
-    console.log(selected, "value");
-    console.log(item.bug_id, "user");
-    console.log(item.type, "type");
-    axios.post(`http://localhost:8080/api/v1/bug/updatebugstatus`, {
-      status: selected,
-      bug_id: item.bug_id,
-      type: item.type
-    })
-      .then((response) => {
-        console.log(response.data);
-        alert(response.data.message);
-        if (userObject.role_name === "developer") {
-          navigate("/projectandbug");
-        }
-        else {
-          navigate("/displaybug");
-        }
-      })
-      .catch((res) => { console.log(res); });
+    try{
+      const res=await updateBugStatusApi({ status: selected,   bug_id: item.bug_id,   type: item.type});
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      if (userObject.role_name === "developer") {
+        navigate("/home");
+      }
+      else {
+        navigate("/qaproject");
+      }
+    }catch(error){
+      toast.success(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
 
   }
   return (

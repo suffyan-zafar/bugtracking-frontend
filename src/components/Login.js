@@ -1,36 +1,39 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useContext, useState } from "react";
-import axios from "axios";
+import { useContext, useEffect, useState } from "react";
 import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import { LoginApi } from "../api/userApi";
 import AuthContext from "../context/AuthContext";
+import Navbar from "./Navbar";
 const Login = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState({ email: "", password: "" });
-
   const { setUserObject } = useContext(AuthContext);
-
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    axios.get(`http://localhost:8080/api/v1/user/login/${user.email}/${user.password}`)
-      .then((response) => {
-          // toast("successfull login!!")
-          console.log(response.data.token.token, "Responsee");
-          localStorage.setItem("token", response.data.token);
-          alert("successfull login!!");
-          setUserObject(response.data.user[0])
-          navigate("/home");
-      })
-      .catch((err) => {
-        alert(`${"Password Not Correct!"}`)
-        console.log(err, "err");
+    try {
+      const res = await LoginApi({ email: user.email, password: user.password })
+      localStorage.setItem("token", res.token);
+      toast.success("successfull login!!",{
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
       });
+      setUserObject(res.user[0])
+      navigate("/home");
+
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      setUser({ email: "", password: "" });
+    }
   };
   return (
     <div>
       <div className="container" style={{ width: 350, marginTop: 50 }}>
-
         <div className="mb-4">
-          <h3>Login Form</h3>
+         <h3>Login Form</h3>
         </div>
         <form onSubmit={onSubmit}>
           <div className="mb-3">

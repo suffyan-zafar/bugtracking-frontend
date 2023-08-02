@@ -1,28 +1,52 @@
 import { useEffect, useContext, useState } from "react";
-import axios from "axios";
+import { useNavigate,Link } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
-
+import { deleteProjectApi, displayProjectApi } from "../api/projectApi";
+import { useLocation } from "react-router-dom";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
 const DisplayProject = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { userObject } = useContext(AuthContext);
   const [data, setData] = useState([]);
+  const item=location.state;
+  console.log(item,"atom");
+  const displayProject = async () => {
+    try {
+      const res = await displayProjectApi({ user_id: userObject?.user_id, project_id:item.project_id });
+      setData(res.res);
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
+  }
   useEffect(() => {
-    axios.get(`http://localhost:8080/api/v1/project/displayproject/${userObject?.user_id}`)
-      .then((response) => {
-        console.log(response.data.res, "display project");
-        setData(response.data.res);
-      })
-      .catch((res) => { console.log(res); });
+    displayProject()
   }, [])
 
-  const handleDelete = (projectObj) => {
-    console.log(projectObj.project_id, "prokject");
-    axios.delete(`http://localhost:8080/api/v1/project/deleteproject/${projectObj.project_id}`)
-      .then((response) => {
-        console.log(response.data, "delete project");
-        alert(response.data.message);
-        setData((prevData) => prevData.filter((item) => item.project_id !== projectObj.project_id));
-      })
-      .catch((res) => { console.log(res); });
+  const handleDelete = async (projectObj) => {
+    try {
+      const res = await deleteProjectApi({ project_id: projectObj.project_id });
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      setData((prevData) => prevData.filter((item) => item.project_id !== projectObj.project_id));
+      navigate("/home")
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
+
+  }
+
+  const AssignProject=()=>{
+    navigate("/assignproject");
   }
   return (
     <div className="container" style={{ marginTop: 100 }}>
@@ -35,7 +59,7 @@ const DisplayProject = () => {
             <th scope="col">Project Title</th>
             <th scope="col">Developer</th>
             <th scope="col">Qa Name </th>
-            <th scope="col">Actions</th>
+            <th scope="col">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -48,10 +72,13 @@ const DisplayProject = () => {
               <td>{item.developer}</td>
               <td>{item.qa}</td>
               <td>{
-                <button className="btn btn-outline-secondary" style={{ color: "white" }} onClick={() => handleDelete(item)}>  Delete Project </button>
+                <>
+                <button className="btn btn-outline-secondary" style={{ color: "white", pointerEvents: (item.developer || item.qa) === null ? "auto" : "none"
+               }} onClick={() => handleDelete(item)}>  Delete Project </button>
+                <Link to="/unassigneddeveloper" state={item} className="btn btn-outline-secondary" style={{ color: "white" , marginLeft:20}}> UnAssigned Dev </Link> 
+                <Link to="/unassignedqa" state={item} className="btn btn-outline-secondary" style={{ color: "white" , marginLeft:20 }}> UnAssigned qa </Link></>
               }
-
-              </td>
+              </td>             
             </tr>
           ))}
 

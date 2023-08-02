@@ -1,30 +1,26 @@
 import { useEffect, useState, useContext } from "react";
-import axios from "axios";
+import 'react-toastify/dist/ReactToastify.css';
+import { useLocation } from "react-router-dom";
+import { toast } from "react-toastify";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { getProjectDeveloper, addBugApi } from "../api/bugApi";
 const CreateBug = () => {
   const { userObject } = useContext(AuthContext);
+  const location = useLocation();
+  const currentDate = new Date();
+  const formattedCurrentDate = currentDate.toISOString().split('T')[0];
   const navigate = useNavigate();
   const [bug, setBug] = useState({ title: "", description: "", deadline: Date, type: "", status: "", image: "", bug_creater: `${userObject.user_id}`, project: 0, developer: 0 })
   const [status, setStatus] = useState([]);
-  const [project, setProject] = useState([]);
   const [developer, setDeveloper] = useState([""]);
-  useEffect(() => {
-    // get project against assign qa
-    axios.get(`http://localhost:8080/api/v1/bug/getuserproject/${userObject?.user_id}`)
-      .then((response) => {
-        console.log(response, "project resposne");
-        setProject(response.data.res);
-      })
-      .catch((res) => { console.log(res); });
-  }, [userObject?.user_id])
+  const item=location.state;
 
   const handleType = (e) => {
-    console.log(e.target.value, "f");
     setBug({ ...bug, type: e.target.value });
 
     if (e.target.value === "feature") {
-      console.log("in if");
+
       setStatus(["new", "started", "completed"]);
     }
     else if (e.target.value === "bug") {
@@ -35,41 +31,58 @@ const CreateBug = () => {
     }
   }
   // get developer against selected projecct
-  const onProjectChange = (e) => {
-    console.log(e.target.value, "project selected");
-    setBug({ ...bug, project: e.target.value });
-    axios.get(`http://localhost:8080/api/v1/bug/getprojectdeveloper/${e.target.value}`)
-      .then((response) => {
-        console.log(response.data, "data in react");
-        setDeveloper(response.data.res)
-      })
-      .catch((res) => { console.log(res); });
+  const onProjectChange = async () => {
+    setBug({ ...bug, project: item.project_id });
+    try {
+      const res = await getProjectDeveloper({ project_id: item.project_id  })
+
+      setDeveloper(res.res)
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });  
+    }
+
   }
 
-  const handleOnSubmit = (e) => {
+  useEffect(() => {
+    // get project against assign qa
+    onProjectChange();
+  }, [])
+
+  const handleOnSubmit = async (e) => {
     e.preventDefault();
-    const Data=new FormData();
+    const Data = new FormData();
     Data.append("title", bug.title);
     Data.append("description", bug.description);
     Data.append("deadline", bug.deadline);
     Data.append("type", bug.type);
     Data.append("status", bug.status);
-    console.log(e.target.image.files,"uploaded");
-    Data.append("image", e.target.image.files[0]); // Get the selected file from the file input
-    // Append the rest of the data
+    const imageFile=e.target.image.files[0];
+    if(imageFile){
+      Data.append("image", imageFile);    // Get the selected file from the file input
+    }
+    else{
+      Data.append("image",null);
+    }
+
     Data.append("bug_creater", userObject.user_id);
     Data.append("project", bug.project);
     Data.append("developer", bug.developer);
-    axios.post(`http://localhost:8080/api/v1/bug/addbug`, Data)
-      .then((response) => {
-        console.log(response.data);
-        alert(response.data.message);
-
-        navigate("/displaybug")
-      })
-      .catch((res) => { 
-        alert(res.response.data.message);
-       });
+    try {
+      const res = await addBugApi(Data);
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      navigate("/qaproject")
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
   }
 
 
@@ -79,6 +92,18 @@ const CreateBug = () => {
         <h3>Create New Bug!</h3>
       </div>
       <form onSubmit={handleOnSubmit}>
+      <div className="mb-3">
+          <label htmlFor="name" className="form-label">
+            Project Name
+          </label>
+          <input
+            type="text"
+            className="form-control"
+            readOnly
+            value={item.project_title}
+
+          />
+        </div>
         <div className="mb-3">
           <label htmlFor="title" className="form-label">
             Title
@@ -110,6 +135,7 @@ const CreateBug = () => {
           <label htmlFor="deadline" >Bug DeadLine</label>
           <input
             type="date"
+            min={formattedCurrentDate}
             className="form-control"
             id="deadline"
             placeholder="Enter Bug Deadline"
@@ -152,25 +178,13 @@ const CreateBug = () => {
             name="image"
             id="image"
             placeholder="Enter Bug image"
-            onChange={(e) => { setBug({ ...bug, image: e.target.value }); }}
+            onChange={(e) => { setBug({ ...bug, image: e.target.value });}}
           />
         </div>
-        <div className="mb-3">
-          <label htmlFor="project">Choose Project:</label>
-          <select name="project" id="project" style={{ width: 190, height: 35, marginLeft: 15 }} required
-            onChange={onProjectChange}
-          >
-            <option value="">Select an Option</option>
-            {project.map((item, index) => (
-              <option key={index} value={item.project_id}>{item.project_title}</option>
-            ))}
-
-          </select>
-        </div>
+      
         <div className="mb-3">
           <label htmlFor="developer">Choose Developer:</label>
           <select name="developer" id="developer" style={{ width: 180, height: 35, marginLeft: 7 }}
-            required
             onChange={(e) => { setBug({ ...bug, developer: e.target.value }); }}
           >
             <option value="">Select an Option</option>

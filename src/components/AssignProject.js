@@ -1,27 +1,21 @@
-import { useEffect, useState, useContext } from "react";
-import axios from "axios";
-import AuthContext from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import {useState,useEffect } from "react";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+
+import { useNavigate,useLocation } from "react-router-dom";
+import { GetDeveloperApi, GetQaApi } from "../api/userApi";
+import { assignProjectApi } from "../api/projectApi";
 const AssignProject = () => {
-  const { userObject } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+  const item = location.state;
   const [showCheckboxes, setShowCheckboxes] = useState(false);
   const [showCheckboxes2, setShowCheckboxes2] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState([]);
   const [selectedOptions2, setSelectedOptions2] = useState([]);
-  const [project, setproject] = useState([]);
   const [users, setUsers] = useState([]);
   const [qa, setQa] = useState([]);
   const [title, setTitle] = useState("");
-
-  useEffect(() => {
-    axios.get(`http://localhost:8080/api/v1/project/getproject/${userObject?.user_id}`)
-      .then((response) => {
-        setproject(response.data.res);
-      })
-      .catch((res) => { console.log(res); });
-
-  }, [])
 
 
   const handleSelectorClick = () => {
@@ -48,51 +42,72 @@ const AssignProject = () => {
     }
   }
 
-  const handleProjectTitle = (e) => {
-    setTitle(e.target.value);
-    console.log(e.target.value, "value");
-    axios.get(`http://localhost:8080/api/v1/user/getDeveloper/${e.target.value}`)
-      .then((response) => {
-        console.log(response,"developer");
-        setUsers(response.data.res)
+    const GetDeveloperApii= async()=>{
+      try {
+        const res = await GetDeveloperApi({ project_id: item.project_id });
+        setUsers(res.res);
+      } catch (error) {
+        console.log(error);
+      }
+    }
 
-      })
-      .catch((res) => { console.log(res); });
+    const GetQaApii= async()=>{
 
-    axios.get(`http://localhost:8080/api/v1/user/getQa/${e.target.value}`)
-      .then((response) => {
-        console.log(response,"qa");
-        setQa(response.data.res)
+    try {
+      const res = await GetQaApi({ project_id:  item.project_id});
+      setQa(res.res);
+    } catch (error) {
+      console.log(error);
+    }
+    }
 
-      })
-      .catch((res) => { console.log(res); });
+    useEffect(()=>{
+      GetDeveloperApii();
+      GetQaApii();
+    },[])
 
-  }
+  // const handleProjectTitle = async (e) => {
+  //   setTitle(e.target.value);
+  //   console.log(e.target.value, "value");
+  //   try {
+  //     const res = await GetDeveloperApi({ project_id: e.target.value });
+  //     console.log(
+  //       "asdas"
+  //     );
+  //     setUsers(res.res);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
 
+  //   try {
+  //     const res = await GetQaApi({ project_id: e.target.value });
+  //     setQa(res.res);
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
 
+  // }
 
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(selectedOptions, "selected");
-    console.log(selectedOptions2, "selected");
-    console.log(title, "selected value");
+ 
 
-
-    axios.post(`http://localhost:8080/api/v1/project/assignproject`, {
-      project_id: `${title}`,
-      developer_id: `${selectedOptions}`,
-      qa_id: `${selectedOptions2}`
-    })
-      .then((response) => {
-        console.log(response.data, "dataa");
-        alert(response.data.message);
-        setSelectedOptions([]);
-        setSelectedOptions2([]);
-        navigate("/displayproject");
-      })
-      .catch((res) => { console.log(res); });
-
+    try {
+      const res = await assignProjectApi({ project_id: item.project_id, developer_id: selectedOptions, qa_id: selectedOptions2 });
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      setSelectedOptions([]);
+      setSelectedOptions2([]);
+      navigate("/home");
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+   
+    }
   }
   return (
     <div className="container" style={{ width: 350, marginTop: 50 }}>
@@ -100,14 +115,17 @@ const AssignProject = () => {
         <h3>Assign Project To Users!</h3>
       </div>
       <form onSubmit={handleSubmit} >
+      
         <div className="mb-3">
-          <select name="type" id="type" style={{ width: 300, height: 35 }} onClick={handleProjectTitle}>
-            <option value="">Select Project</option>
-            {project.map((item, index) => <>
-              <option key={index} value={item.project_id}>
-                {item.project_title}</option></>
-            )}
-          </select>
+          <label htmlFor="name" className="form-label">
+            Project Name
+          </label>
+          <input
+            type="text"
+            className="form-control"
+            readOnly
+            value={item.project_title}
+          />
         </div>
 
         <div>
@@ -149,8 +167,6 @@ const AssignProject = () => {
             </div>
           )}
         </div>
-
-
 
         <div className="mb-3">
           <button className="btn btn-primary " style={{ marginLeft: 90 }}>

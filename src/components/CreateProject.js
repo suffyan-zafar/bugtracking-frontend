@@ -1,28 +1,30 @@
 import { useContext, useState } from "react";
 import AuthContext from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
+import { addProjectApi } from "../api/projectApi";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
 const CreateProject = () => {
   const [title, setTitle] = useState("");
   const { userObject } = useContext(AuthContext);
   const navigate = useNavigate();
-  const onSubmit = (e) => {
+
+  const onSubmit = async (e) => {
     e.preventDefault();
-    axios.post(`http://localhost:8080/api/v1/project/addproject`, {
-      title: `${title}`,
-      manager_id: `${userObject.user_id}`
-    })
-      .then((response) => {
-        console.log(response.data);
-        alert(response.data.message);
-        setTitle("");
-        navigate('/displayproject');
-      })
-      .catch((err) => {
-        alert(err.response.data.message)
-        console.log(err, "err");
+    try {
+      const res = await addProjectApi({ title: title, manager_id: userObject.user_id })
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
       });
+      setTitle("");
+      navigate('/home');
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
   };
   return (
     <div>

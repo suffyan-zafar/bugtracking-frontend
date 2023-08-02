@@ -1,14 +1,26 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import AuthContext from "../context/AuthContext";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
 const Navbar = () => {
   const navigate = useNavigate();
   const userObject = useContext(AuthContext);
   const LogOut = () => {
+    toast.success("successfull Logout!!",{
+      position: toast.POSITION.TOP_CENTER,
+      autoClose: 1000
+    });
     localStorage.removeItem("token");
-    alert("succesfully Logout!")
+ 
     navigate("/login")
   }
+  useEffect(()=>{
+    if(localStorage.getItem("token")){
+      LogOut();
+    }
+  
+  },[])
   return (
     <div>
       <nav className="navbar navbar-expand-lg  bg-dark navbar-dark" >
@@ -30,23 +42,19 @@ const Navbar = () => {
           <div className="collapse navbar-collapse" id="navbarSupportedContent">
             {localStorage.getItem("token") ? <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               {userObject.userObject?.role_name === "manager" ? <>
+              
+              <li className="nav-item">
+                  <Link className="nav-link" to="/managerproject">Projects </Link>
+                </li>
                 <li className="nav-item">
                   <Link className="nav-link" to="/createproject">Create Project </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/assignproject"> Assign Project </Link>
-                </li>
-                <li className="nav-item">
-                  <Link className="nav-link" to="/displayproject"> Display Project </Link>
                 </li> </> :
                 userObject.userObject?.role_name === "qa" ? <>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/createbug">Create New Bug</Link>
+                 <li className="nav-item">
+                    <Link className="nav-link" to="/qaproject">Projects</Link>
                   </li>
-                  <li className="nav-item">
-                    <Link className="nav-link" to="/displaybug">Display Bug</Link>
-                  </li> </> : userObject.userObject?.role_name === "developer" ? <li className="nav-item">
-                    <Link className="nav-link" to="/projectandbug">Project With Bug</Link>
+                   </> : userObject.userObject?.role_name === "developer" ? <li className="nav-item">
+                    <Link className="nav-link" to="/developerproject">Projects</Link>
                   </li> : ""
               }
             </ul> : ""

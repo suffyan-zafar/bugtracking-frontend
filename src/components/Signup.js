@@ -1,23 +1,29 @@
 import { useState } from "react";
-import axios from 'axios';
-
+import { useNavigate } from "react-router-dom";
+import { SignupApi } from "../api/userApi";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
 const Signup = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState({ name: "", email: "", password: "", userType: "" });
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
-    console.log(user);
-    axios.post(`http://localhost:8080/api/v1/user/signup`, {
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      user_type: user.userType
-    }).then((response) => {
-      console.log(response.data);
-      alert(response.data.message);
+
+    try {
+      const res = await SignupApi({ name: user.name, email: user.email, password: user.password, user_type: user.userType });
+      toast.success(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      navigate('/login')
       setUser({ name: "", email: "", password: "", userType: "" });
-    }).catch((err) => {
-      console.log(err, "err");
-    })
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
+
 
   }
   return (

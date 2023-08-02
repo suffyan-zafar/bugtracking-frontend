@@ -1,42 +1,58 @@
 import { useEffect, useState, useContext } from "react";
-import axios from "axios";
 import AuthContext from "../context/AuthContext";
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { deleteBugApi, displayBugApi } from "../api/bugApi";
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 const DisplayBug = () => {
+  const location = useLocation();
   const { userObject } = useContext(AuthContext);
   const [data, setData] = useState([]);
+  const item = location.state;
+  const displayBug = async () => {
+    try {
+      const res = await displayBugApi({ user_id: userObject?.user_id, project_id: item.project_id});
+      setData(res.res);
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    
+    }
+  }
   useEffect(() => {
     // get project against assign qa
-    axios.get(`http://localhost:8080/api/v1/bug/displayBug/${userObject?.user_id}`)
-      .then((response) => {
-     
-        setData(response.data.res);
-      })
-      .catch((res) => { console.log(res); });
-  }, [userObject?.user_id]);
+    displayBug();
+  }, []);
 
+  
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return new Intl.DateTimeFormat('en-US', options).format(date);
   }
 
-  const handleDelete = (bugObj) => {
-    console.log(bugObj, "delete bug");
-    axios.delete(`http://localhost:8080/api/v1/bug/deletebug/${bugObj?.bug_id}/${bugObj?.image}`)
-      .then((response) => {
-        console.log(response, "response  ");
-        alert(response.data.message);
-        setData((prevData) => prevData.filter((item) => item.bug_id !== bugObj.bug_id));
-
-      })
-      .catch((res) => { console.log(res); });
+  const handleDelete = async (bugObj) => {
+    try {
+      const res = await deleteBugApi({ bug_id: bugObj?.bug_id, image: bugObj?.image });
+      toast.error(res.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+      setData((prevData) => prevData.filter((item) => item.bug_id !== bugObj.bug_id));
+    } catch (error) {
+      toast.error(error?.response?.data?.message, {
+        position: toast.POSITION.TOP_CENTER,
+        autoClose: 1000
+      });
+    }
   }
 
-  const handleImage=(image)=>{
-    console.log(image,"image");
-      const baseBackendUrl="http://localhost:8080";
-      window.open(`${baseBackendUrl}/${image.image}`, '_blank');
+  const handleImage = (image) => {
+    const baseBackendUrl = "http://localhost:8080";
+    window.open(`${baseBackendUrl}/${image.image}`, '_blank');
   }
 
   return (
@@ -70,7 +86,10 @@ const DisplayBug = () => {
               <td>{item.developer_name}</td>
               <td>{<><Link to="/updatebugstatus" state={item} className="btn btn-outline-secondary" style={{ color: "white" }}>Update Status</Link>
                 <button className="btn btn-outline-secondary" style={{ color: "white" }} onClick={() => handleDelete(item)}>  Delete </button>
-                <button className="btn btn-outline-secondary" style={{ color: "white" }} onClick={() => handleImage(item)}>  View </button></>
+                <button className="btn btn-outline-secondary" style={{ color: "white" }} onClick={() => handleImage(item)}>  View </button>
+                <Link to="/assigndeveloper" state={item} className="btn btn-outline-secondary"style={{
+                color: "white", marginRight: 5, pointerEvents: item.developer_name === null ? "auto" : "none"
+              }}>Assign Developer</Link></>
               }
 
               </td>
